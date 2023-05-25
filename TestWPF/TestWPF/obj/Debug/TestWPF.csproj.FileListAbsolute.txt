@@ -20,3 +20,5 @@ D:\Github\WPF\TestWPF\TestWPF\bin\Debug\WpfAnimatedGif.xml
 D:\Github\WPF\TestWPF\TestWPF\obj\Debug\TestWPF.csproj.CopyComplete
 D:\Github\WPF\TestWPF\TestWPF\obj\Debug\InputTextWindow.g.cs
 D:\Github\WPF\TestWPF\TestWPF\obj\Debug\InputTextWindow.baml
+D:\Github\WPF\TestWPF\TestWPF\obj\Debug\ReplyBoxWindow.g.cs
+D:\Github\WPF\TestWPF\TestWPF\obj\Debug\ReplyBoxWindow.baml

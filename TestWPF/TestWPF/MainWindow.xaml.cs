@@ -16,6 +16,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 using System.Windows.Threading;
+using TestWPF.Resources;
 using WpfAnimatedGif;
 
 namespace TestWPF
@@ -28,13 +29,13 @@ namespace TestWPF
         public MainWindow()
         {
             InitializeComponent(); 
-            LoadGifImage("Walk_left");
-
+            LoadGifImage("Stay");
+            /*
             if (!bubbleVisible)
             {
                 setBubbleTimer();
             }
-            setChatTimer();
+            setChatTimer();*/
             ShowBubble();
         }
         public void HideRequestButton()
@@ -55,7 +56,6 @@ namespace TestWPF
             bubbleTimer.Interval = TimeSpan.FromSeconds(10);
             bubbleTimer.Tick += BubbleTimer_Tick;
             bubbleTimer.Start();
-            bubbleVisible = true;
         }
         public void setChatTimer()
         {
@@ -99,7 +99,7 @@ namespace TestWPF
         //loadImage
         private void LoadGifImage(string gifMode)
         {
-            var gifPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"../../Resources/gif/{gifMode}.gif");
+            var gifPath = System.IO.Path.Combine(AppDomain.CurrentDomain.BaseDirectory, $"../../Resources/{gifMode}.gif");
             var gifImage = new BitmapImage(new Uri(gifPath));
             ImageBehavior.SetAnimatedSource(GifImage, gifImage);
             GifImage.Width = this.Width;
@@ -114,26 +114,53 @@ namespace TestWPF
         private DispatcherTimer moveTimer;
         private DispatcherTimer bubbleTimer;
         private DispatcherTimer chatTimer;
+        private DispatcherTimer stayTimer;
 
         private double deltaX = 0;
         private double deltaY = 0;
         private double speed = 10;
         private Random random = new Random();
 
-        string gifFile = "Walk_left";
+        string moveGif = "Walk_left";
 
         private bool bubbleVisible = false;
         private bool isMoving = false;
 
-        private void Click_move(object sender, RoutedEventArgs e)
+        private void Move()
         {
             isMoving = true;
             moveTimer = new DispatcherTimer();
             moveTimer.Interval = TimeSpan.FromMilliseconds(10);
             moveTimer.Tick += MoveTimer_Tick;
             moveTimer.Start();
+            LoadGifImage(moveGif);
+        }
+
+        private void Click_move(object sender, RoutedEventArgs e)
+        {
+            Move();
         }
         
+        private void RandomStaying()
+        {
+            int state = random.Next(1, 5);
+            switch (state)
+            {
+                case 1:
+                    LoadGifImage("Stay");
+                    break;
+                case 2:
+                    LoadGifImage("Kick");
+                    break;
+                case 3:
+                    LoadGifImage("Rain");
+                    break;
+                case 4:
+                    Move();
+                    break;
+            }
+        }
+
         private void Click_stop(object sender, RoutedEventArgs e)
         {
             moveTimer.Stop();
@@ -148,7 +175,8 @@ namespace TestWPF
                 isMoving = false;
                 moveTimer.Stop();
                 moveTimer = new DispatcherTimer();
-                moveTimer.Start();
+                //moveTimer.Start();
+                RandomStaying();
                 return;
             }
             if (isMoving)
@@ -157,15 +185,15 @@ namespace TestWPF
                 this.Top += deltaY;
 
                 // Check for change in direction and update GIF
-                if (deltaX < 0 && gifFile != "Walk_left")
+                if (deltaX < 0 && moveGif != "Walk_left")
                 {
-                    gifFile = "Walk_left";
-                    LoadGifImage(gifFile);
+                    moveGif = "Walk_left";
+                    LoadGifImage(moveGif);
                 }
-                else if (deltaX > 0 && gifFile != "Walk_right")
+                else if (deltaX > 0 && moveGif != "Walk_right")
                 {
-                    gifFile = "Walk_right";
-                    LoadGifImage(gifFile);
+                    moveGif = "Walk_right";
+                    LoadGifImage(moveGif);
                 }
 
                 // Check for collision with screen edges
@@ -206,6 +234,7 @@ namespace TestWPF
         //现在是要气泡
 
 
+
         private DateTime lastChatBubbleClickTime = DateTime.MinValue; // 记录上一次红色对话框点击的时间
 
         private void ChatBubble_Click(object sender, RoutedEventArgs e)
@@ -213,11 +242,37 @@ namespace TestWPF
             //红色对话框事件
             HideBubble();
             Console.WriteLine("Chat bubble clicked!");
-            StartGlobalTimer();
-            lastChatBubbleClickTime = DateTime.Now; // 记录当前时间
+           // StartChatTimer();//注意这里
+           // lastChatBubbleClickTime = DateTime.Now; // 记录当前时间
+            CallReplyWindow();
         }
 
-        private void ChatTimer_Tick(object sender, EventArgs e)
+
+
+        private void StartChatTimer()
+        {
+            chatTimer = new DispatcherTimer();
+            chatTimer.Interval = TimeSpan.FromSeconds(1);
+            chatTimer.Tick += ChatTimer_Tick;
+            chatTimer.Start();
+        }
+        
+        private void StartStayTimer()
+        {
+            stayTimer = new DispatcherTimer();
+            stayTimer.Interval = TimeSpan.FromSeconds(3);
+            stayTimer.Tick += StayTimer_Tick;
+            stayTimer.Start();
+        }
+
+        private void StayTimer_Tick(object sender, EventArgs e)
+        {
+            if(!isMoving)
+            {
+                RandomStaying();
+            }
+        }
+        private void ChatTimer_Tick(object sender, EventArgs e) //
         {
             const int interval = 3; // 时间间隔，单位：秒
 
@@ -228,21 +283,10 @@ namespace TestWPF
             }
         }
 
-
-        private void StartGlobalTimer()
-        {
-            chatTimer = new DispatcherTimer();
-            chatTimer.Interval = TimeSpan.FromSeconds(1);
-            chatTimer.Tick += ChatTimer_Tick;
-            chatTimer.Start();
-        }
-
-
-        
         private void BubbleTimer_Tick(object sender, EventArgs e)
         {
 
-            ShowBubble();
+            //ShowBubble();
         }
 
         private void HideBubble()
@@ -250,7 +294,7 @@ namespace TestWPF
             ChatBubble.Visibility = Visibility.Collapsed;
             RequestBubble.Visibility = Visibility.Collapsed;
             bubbleVisible = false;
-            bubbleTimer.Stop();
+            //bubbleTimer.Stop();
         }
         
         private void RequestBubble_Click(object sender, MouseButtonEventArgs e)
@@ -262,26 +306,31 @@ namespace TestWPF
             HideBubble();
         }
 
-        private void RequestBubble_Click(object sender, RoutedEventArgs e)
+        private void CallRequestWindow()
         {
-            //蓝色对话框事件
-            HideBubble();
-            Console.WriteLine("Request bubble clicked!");
-            var newWindow = new InputTextWindow();
-            newWindow.Owner = this;
+            double augmentRate = this.Width / 100;
+            var requestWindow = new InputTextWindow();
+            requestWindow.Owner = this;
 
+            requestWindow.Height *= augmentRate;
+            requestWindow.Width *= augmentRate;
 
+            requestWindow.Left = this.Left + this.Width;
+            requestWindow.Top = this.Top + this.Width / 3 ;
 
-            newWindow.Left = this.Left + this.Width ;
-            newWindow.Top = this.Top + this.Height-20;
+            TextBox inputBox = (TextBox)requestWindow.FindName("InputBox");
+            inputBox.Width *= augmentRate;
+            inputBox.Height *= augmentRate;
 
-            ArrowImage.Visibility = Visibility.Visible; 
+            Viewbox inputView = (Viewbox)requestWindow.FindName("InputBoxView");
+            inputView.Width *= augmentRate;
+            inputView.Height *= augmentRate;
+
+            //ArrowImage.Visibility = Visibility.Visible;//
             // 显示新窗口
-            newWindow.ShowDialog();
-
-
+            requestWindow.ShowDialog();
             //获取文本
-            string result = newWindow.Result;
+            string result = requestWindow.Result;
 
             //文本正确
             Console.WriteLine(result);
@@ -294,7 +343,62 @@ namespace TestWPF
                 return;
             }
             */
-            ShowBubble();
+        }
+
+        private void CallReplyWindow()
+        {
+
+            double augmentRate = this.Width / 100;
+            // Update ReplyWindow size and position
+            ReplyBoxWindow replyWindow = new ReplyBoxWindow();
+            replyWindow.Owner = this;
+
+            replyWindow.Width = replyWindow.Width * augmentRate;
+            replyWindow.Height = replyWindow.Height * augmentRate;
+
+            // Update font size
+            TextBlock replyBox = (TextBlock)replyWindow.FindName("ReplyBox");
+            replyBox.Width *= augmentRate;
+            replyBox.Height *= augmentRate;
+
+            replyBox.FontSize = replyBox.FontSize * augmentRate;
+            replyBox.Text = "Test and need events, can you hear me?";
+
+            Viewbox replyView = (Viewbox)replyWindow.FindName("ReplyBoxView");
+            replyView.Width *= augmentRate;
+            replyView.Height *= augmentRate;
+
+            replyWindow.Left = this.Left + this.Width;
+            replyWindow.Top = this.Top ;
+            replyWindow.ShowDialog();
+
+            //如果要显示文本这里需要传入文本。！！！！！！
+
+            if(true)
+            {
+                ShowBubble();
+            }
+
+        }
+
+        private void MainWindow_MouseRightButtonDown(object sender, MouseButtonEventArgs e)
+        {
+            RandomStaying();
+        }
+
+        private void RequestBubble_Click(object sender, RoutedEventArgs e)
+        {
+            //蓝色对话框事件
+            HideBubble();
+            Console.WriteLine("Request bubble clicked!");
+            CallRequestWindow();
+            //如果事件来了
+            if(true)
+            {
+                ArrowImage.Visibility = Visibility.Hidden;//
+                ShowBubble();
+
+            }
         }
         /*
         private void Window_KeyDown(object sender, KeyEventArgs e)
@@ -325,6 +429,7 @@ namespace TestWPF
         private void ShowBubble()
         {
             int randomNum = random.Next(1, 101);
+            bubbleVisible = true;
             if (randomNum <= 30)
             {
                 ChatBubble.Visibility = Visibility.Visible;
